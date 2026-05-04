@@ -39,12 +39,22 @@ class SimpleSwitch13(app_manager.OSKenApp):
         self.serverlist=[]                                                              #Creating a list of servers
         self.virtual_lb_ip = "10.0.0.100"                                               #Virtual Load Balancer IP
         self.virtual_lb_mac = "AB:BC:CD:EF:AB:BC"                                          #Virtual Load Balancer MAC Address
-        self.counter = 0                                                                #Used to calculate mod in server selection below
+        # MODIFIED: Track active connections per server instead of simple counter
+        self.server_connections = {}                                                    #Connection counter per server for LEAST CONNECTIONS algorithm
         
         self.serverlist.append({'ip':"10.0.0.2", 'mac':"00:00:00:00:00:02", "outport":"2"})            #Appending all given IP's, assumed MAC's and ports of switch to which servers are connected to the list created 
         self.serverlist.append({'ip':"10.0.0.3", 'mac':"00:00:00:00:00:03", "outport":"3"})
         self.serverlist.append({'ip':"10.0.0.4", 'mac':"00:00:00:00:00:04", "outport":"4"})
+        
+        # Initialize connection counters for each server
+        for server in self.serverlist:
+            self.server_connections[server['ip']] = 0
+        
+        # Track flow cookies to associate with server IP for connection counting
+        self.flow_to_server = {}  # {cookie: server_ip}
+        
         print("Done with initial setup related to server list creation.")
+        print("[LEAST-CONNECTIONS] Initialized connection tracking:", self.server_connections)
         
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -79,6 +89,26 @@ class SimpleSwitch13(app_manager.OSKenApp):
             mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
                                     match=match, instructions=inst)
         datapath.send_msg(mod)
+
+    # ADDED: Event handler untuk flow removal - decrement connection counter
+    @set_ev_cls(ofp_event.EventOFPFlowRemoved, MAIN_DISPATCHER)
+    def flow_removed_handler(self, ev):
+        msg = ev.msg
+        datapath = msg.datapath
+        
+        # Check if this flow is associated with a server
+        if msg.cookie in self.flow_to_server:
+            server_ip = self.flow_to_server[msg.cookie]
+            
+            # Decrement connection counter
+            if self.server_connections[server_ip] > 0:
+                self.server_connections[server_ip] -= 1
+            
+            print("[FLOW-REMOVED] Flow expired for server {}, updated loads: {}".format(
+                server_ip, self.server_connections))
+            
+            # Clean up tracking dictionary
+            del self.flow_to_server[msg.cookie]
 
     def function_for_arp_reply(self, dst_ip, dst_mac):                                      #Function placed here, source MAC and IP passed from below now become the destination for the reply ppacket 
         print("(((Entered the ARP Reply function to build a packet and reply back appropriately)))")
@@ -223,13 +253,18 @@ class SimpleSwitch13(app_manager.OSKenApp):
         tcp_header = pkt.get_protocols(tcp.tcp)[0]
         #print("TCP_Header", tcp_header)
 
-        count = self.counter % 3                            #Round robin fashion setup
-        server_ip_selected = self.serverlist[count]['ip']
-        server_mac_selected = self.serverlist[count]['mac']
-        server_outport_selected = self.serverlist[count]['outport']
-        server_outport_selected = int(server_outport_selected)
-        self.counter = self.counter + 1
-        print("The selected server is ===> ", server_ip_selected)
+        # MODIFIKASI: LEAST CONNECTIONS - Memilih server dengan jumlah koneksi aktif paling sedikit
+        server_ip_selected = min(self.server_connections, key=self.server_connections.get)
+        server = next(s for s in self.serverlist if s['ip'] == server_ip_selected)
+        server_mac_selected = server['mac']
+        server_outport_selected = int(server['outport'])
+        
+        # Increment connection counter for selected server
+        self.server_connections[server_ip_selected] += 1
+        
+        print("\n[LEAST-CONNECTIONS] Selected server: {} with {} active connections".format(
+            server_ip_selected, self.server_connections[server_ip_selected]))
+        print("[LOAD-STATUS] Server loads: {}".format(self.server_connections))
 
         
         #Route to server
@@ -238,13 +273,25 @@ class SimpleSwitch13(app_manager.OSKenApp):
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
         cookie = random.randint(0, 0xffffffffffffffff)
         flow_mod = parser.OFPFlowMod(datapath=datapath, match=match, idle_timeout=7, instructions=inst, buffer_id = msg.buffer_id, cookie=cookie)
+        
+        # ADDED: Track cookie → server_ip mapping for connection counting on flow removal
+        self.flow_to_server[cookie] = server_ip_selected
+        
         datapath.send_msg(flow_mod)
-        print("<========Packet from client: "+str(ip_header.src)+". Sent to server: "+str(server_ip_selected)+", MAC: "+str(server_mac_selected)+" and on switch port: "+str(server_outport_selected)+"========>")  
+        print("<========Packet from client: "+str(ip_header.src)+". Sent to server: "+str(server_ip_selected)+", MAC: "+str(server_mac_selected)+" and on switch port: "+str(server_outport_selected)+"========>")
+        
+        # MODIFIED: Decrement connection counter when flow expires (idle_timeout = 7 seconds)
+        # This is approximation - connection is considered "ended" after 7 seconds of inactivity
+        print("[CONN-TRACKING] Flow will expire in 7s, then connection counter will be decremented")
 
 
         #Reverse route from server
         match = parser.OFPMatch(in_port=server_outport_selected, eth_type=eth.ethertype, eth_src=server_mac_selected, eth_dst=self.virtual_lb_mac, ip_proto=ip_header.proto, ipv4_src=server_ip_selected, ipv4_dst=self.virtual_lb_ip, tcp_src=tcp_header.dst_port, tcp_dst=tcp_header.src_port)
-        actions = [parser.OFPActionSetField(eth_src=self.virtual_lb_mac), parser.OFPActionSetField(ipv4_src=self.virtual_lb_ip), parser.OFPActionSetField(ipv4_dst=ip_header.src), parser.OFPActionSetField(eth_dst=eth.src), parser.OFPActionOutput(in_port)]
+        actions = [parser.OFPActionSetField(eth_src=self.virtual_lb_mac), 
+                   parser.OFPActionSetField(ipv4_src=self.virtual_lb_ip), 
+                   parser.OFPActionSetField(ipv4_dst=ip_header.src), 
+                   parser.OFPActionSetField(eth_dst=eth.src), 
+                   parser.OFPActionOutput(in_port)]
         inst2 = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
         cookie = random.randint(0, 0xffffffffffffffff)
         flow_mod2 = parser.OFPFlowMod(datapath=datapath, match=match, idle_timeout=7, instructions=inst2, cookie=cookie)

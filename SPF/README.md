@@ -27,4 +27,3 @@ Lakukan verifikasi pada table flow pada switch terkait apa saja yang berubah
 mininet> dpctl dump-flows -O OpenFlow13
 ```
 Lakukan beberapa ujicoba dengan kombinasi host lainnya atau pun pemutusan jalur lainnya, dan amati apa yang tampil pada terminal console yang menjalankan `osken-manager --observe-links dijkstra_osken_controller.py` atau pun pada terminal console yang menjalankan `python3 topo-spf_lab.py` 
-
