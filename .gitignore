@@ -18,7 +18,10 @@ ENV/
 # IDE
 .vscode/
 .github/
+.agents/
 .idea/
+docs/
 *.swp
 *.swo
 *~
+AGENT*.md

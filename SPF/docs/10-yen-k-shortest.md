@@ -149,4 +149,5 @@ mininet> dpctl dump-groups -O OpenFlow13
 - `algorithms/yen_k_shortest.py` — pure Python implementation
 - `kshortest_osken_controller.py` — controller (382 lines)
 - `docs/09-ecmp.md` — OpenFlow GROUP table detail
+- `docs/11-suurballe.md` — edge-disjoint failover paths
 - `topo-mesh_lab.py` — topology with multiple disjoint paths

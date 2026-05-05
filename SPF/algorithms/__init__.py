@@ -15,6 +15,7 @@ Modules and their complexities:
     floyd_warshall - All-pairs shortest paths       O(V^3)
     widest_path    - Max-bandwidth bottleneck path  O((V+E) log V)
     yen_k_shortest - Yen's K-shortest paths         O(K * V * (E + V log V))
+    suurballe      - Edge-disjoint shortest paths   O((V+E) log V)
 """
 
 from .bfs import bfs
@@ -24,6 +25,7 @@ from .bellman_ford import bellman_ford
 from .floyd_warshall import floyd_warshall
 from .widest_path import widest_path
 from .yen_k_shortest import yen_k_shortest
+from .suurballe import suurballe_edge_disjoint
 
 __all__ = [
     "bfs",
@@ -35,4 +37,5 @@ __all__ = [
     "floyd_warshall",
     "widest_path",
     "yen_k_shortest",
+    "suurballe_edge_disjoint",
 ]
