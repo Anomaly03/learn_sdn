@@ -38,7 +38,8 @@ SPF/
 │   ├── bellman_ford.py
 │   ├── floyd_warshall.py
 │   ├── widest_path.py
-│   └── yen_k_shortest.py
+│   ├── yen_k_shortest.py
+│   └── suurballe.py
 │
 ├── base_controller.py   Shared SDN infrastructure (all controllers inherit)
 │
@@ -64,6 +65,7 @@ SPF/
 | Dijkstra MP     | O((V+E) log V)  | No      | Yes       | ECMP equal-cost multipath          |
 | A* Multipath    | O((V+E) log V)  | No      | Yes       | ECMP with heuristic search          |
 | K-Shortest (Yen)| O(KV(E+V logV)) | No      | Yes       | Path diversity, Yen's algorithm     |
+| Suurballe (FF)  | O((V+E) log V)  | No      | Yes       | Fast failover, edge-disjoint paths  |
 
 *Widest Path requires weights; degrades to unit-weight routing without them.
 
@@ -92,6 +94,8 @@ python3 SPF/astar_osken_controller.py
 python3 SPF/bellman_ford_osken_controller.py
 python3 SPF/floyd_warshall_osken_controller.py
 python3 SPF/widest_path_osken_controller.py
+python3 SPF/suurballe_fast_failover_osken_controller.py
+python3 SPF/suurballe_balanced_failover_osken_controller.py
 python3 SPF/dijkstra_multipath_osken_controller.py
 python3 SPF/astar_multipath_osken_controller.py
 python3 SPF/kshortest_osken_controller.py
@@ -119,3 +123,4 @@ Recommended reading order:
 8. [08-widest-path.md](08-widest-path.md) — Widest path: QoS routing
 9. [09-ecmp.md](09-ecmp.md) — ECMP and multipath
 10. [10-yen-k-shortest.md](10-yen-k-shortest.md) — Yen's K-shortest paths
+11. [11-suurballe.md](11-suurballe.md) — Suurballe + FAST_FAILOVER
