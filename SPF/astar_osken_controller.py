@@ -10,7 +10,7 @@ Heuristic:    reverse-BFS hop distance from destination
 Multipath:    no - single best path per (src, dst)
 ECMP:         no
 
-Run:
+Run
     python3 astar_osken_controller.py
     python3 astar_osken_controller.py --verbose
 
