@@ -273,9 +273,16 @@ class DijkstraMultipathSwitch(DijkstraSwitch):
         self.flow_groups.clear()
 
     def _reinstall_all_known_routes(self):
-        """Reinstall multipath ECMP routes for all known host pairs."""
+        """
+        Reinstall multipath ECMP routes for all known host pairs.
+        Modifikasi: Menambahkan baris kosong sebagai pemisah antar iterasi konvergensi.
+        """
         hosts = self._active_hosts()
         installed = skipped = unreachable = 0
+        
+        # Penanda visual awal fase kalkulasi/eksekusi
+        self.logger.info("-" * 50) 
+        
         for src_mac in hosts:
             for dst_mac in hosts:
                 if src_mac == dst_mac:
@@ -285,16 +292,26 @@ class DijkstraMultipathSwitch(DijkstraSwitch):
                 if not src_loc or not dst_loc:
                     skipped += 1
                     continue
+                
+                # Fase Kalkulasi (Dijkstra)
                 paths = self.compute_multipath(
                     src_loc[0], dst_loc[0], src_loc[1], dst_loc[1]
                 )
+                
+                # Fase Eksekusi (Installation)
                 if paths:
                     self.install_multipath(paths, src_mac, dst_mac)
                     installed += 1
                 else:
                     unreachable += 1
+        
+        # Ringkasan hasil akhir iterasi
         self.logger.info("[TOPO] multipath refresh: installed=%d skipped=%d unreachable=%d hosts=%d",
                          installed, skipped, unreachable, len(hosts))
+        
+        # MODIFIKASI: Menambahkan baris kosong dan penanda akhir iterasi
+        self.logger.info("[CYCLE-DONE] Iteration completed.")
+        print("\n" + "="*60 + "\n")
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
