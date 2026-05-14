@@ -33,34 +33,39 @@ SPF_FLOW_PRIORITY = 100
 
 class DijkstraSwitch(SPFBaseController):
     """Single shortest-path forwarding using Dijkstra's algorithm.
-
-    Overrides compute_path() to call algorithms/dijkstra.py.
-    All SDN infrastructure (topology, host learning, flows, flooding)
-    is provided by SPFBaseController.
+    Modifikasi: Menambahkan penanda visual antar iterasi untuk monitoring.
     """
 
     FLOW_COOKIE = SPF_FLOW_COOKIE
 
     def compute_path(self, src, dst, first_port, final_port):
-        """Compute shortest path using Dijkstra's algorithm.
-
-        Algorithm steps:
-            1. Run Dijkstra from src - O((V+E) log V)
-            2. Reconstruct path by following predecessor pointers
-        """
+        """Compute shortest path using Dijkstra's algorithm."""
         self.logger.debug("[PATH-QUERY] Dijkstra: s%d -> s%d", src, dst)
 
-        # --- Phase 1: Run Dijkstra from source switch ---
-        # Returns distance[v] = min hop count from src to v
-        #         previous[v] = predecessor of v on the shortest path
+        # --- Phase 1: Run Dijkstra ---
         distance, previous = dijkstra(self.adjacency, src)
 
         reachable = sum(1 for d in distance.values() if d != float("inf"))
-        self.logger.info("[SPF-DONE] s%d->s%d reachable=%d/%d",
-                         src, dst, reachable, len(distance))
+        
+        # --- Phase 2: Reconstruct path ---
+        path = self._reconstruct_path(src, dst, first_port, final_port, distance, previous)
+        
+        # Penanda jika rute berhasil ditemukan
+        if path:
+            self.logger.info("[SPF-DONE] s%d->s%d cost=%d path_len=%d", 
+                             src, dst, distance[dst], len(path))
+        
+        return path
 
-        # --- Phase 2: Reconstruct path from predecessor pointers ---
-        return self._reconstruct_path(src, dst, first_port, final_port, distance, previous)
+    # Override fungsi reinstall untuk memberikan pembatas visual
+    def _reinstall_all_known_routes(self):
+        """Reinstall routes dengan tambahan blank line di terminal."""
+        # Panggil fungsi asli dari Parent (SPFBaseController)
+        super(DijkstraSwitch, self)._reinstall_all_known_routes()
+        
+        # MODIFIKASI: Penanda visual akhir satu kesatuan iterasi
+        self.logger.info("[CYCLE-DONE] Single-Path Iteration completed.")
+        print("\n" + "="*60 + "\n")
 
 
 if __name__ == '__main__':
