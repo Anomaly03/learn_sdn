@@ -54,7 +54,7 @@ class HybridMeshTopo(Topo):
     """Hybrid mesh topology for SPF and redundancy experiments."""
 
     def addSwitch(self, name, **opts):
-        kwargs = {"protocols": "OpenFlow13"}
+        kwargs = {"protocols": "OpenFlow10,OpenFlow13"}
         kwargs.update(opts)
         return super(HybridMeshTopo, self).addSwitch(name, **kwargs)
 
@@ -105,16 +105,6 @@ def run():
         waitConnected=True,
     )
 
-    info('\n*** Disabling IPv6\n')
-    for host in net.hosts:
-        info(f'disable ipv6 in {host}\n')
-        host.cmd('sysctl -w net.ipv6.conf.all.disable_ipv6=1')
-
-    for sw in net.switches:
-        info(f'disable ipv6 in {sw}\n')
-        sw.cmd('sysctl -w net.ipv6.conf.all.disable_ipv6=1')
-
-    info('\n\n*** Starting Hybrid Mesh topology...\n')
     net.start()
 
     info('*** Dumping host connections\n')
