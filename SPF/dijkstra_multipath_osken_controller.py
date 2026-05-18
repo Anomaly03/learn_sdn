@@ -273,6 +273,7 @@ class DijkstraMultipathSwitch(DijkstraSwitch):
         self.flow_groups.clear()
 
     def _reinstall_all_known_routes(self):
+<<<<<<< HEAD
         """
         Reinstall multipath ECMP routes for all known host pairs.
         Modifikasi: Menambahkan baris kosong sebagai pemisah antar iterasi konvergensi.
@@ -283,6 +284,11 @@ class DijkstraMultipathSwitch(DijkstraSwitch):
         # Penanda visual awal fase kalkulasi/eksekusi
         self.logger.info("-" * 50) 
         
+=======
+        """Reinstall multipath ECMP routes for all known host pairs."""
+        hosts = self._active_hosts()
+        installed = skipped = unreachable = 0
+>>>>>>> 773ffb33fbbeb89fbee3b09a2893f8180f3d9dbb
         for src_mac in hosts:
             for dst_mac in hosts:
                 if src_mac == dst_mac:
@@ -292,6 +298,7 @@ class DijkstraMultipathSwitch(DijkstraSwitch):
                 if not src_loc or not dst_loc:
                     skipped += 1
                     continue
+<<<<<<< HEAD
                 
                 # Fase Kalkulasi (Dijkstra)
                 paths = self.compute_multipath(
@@ -299,11 +306,17 @@ class DijkstraMultipathSwitch(DijkstraSwitch):
                 )
                 
                 # Fase Eksekusi (Installation)
+=======
+                paths = self.compute_multipath(
+                    src_loc[0], dst_loc[0], src_loc[1], dst_loc[1]
+                )
+>>>>>>> 773ffb33fbbeb89fbee3b09a2893f8180f3d9dbb
                 if paths:
                     self.install_multipath(paths, src_mac, dst_mac)
                     installed += 1
                 else:
                     unreachable += 1
+<<<<<<< HEAD
         
         # Ringkasan hasil akhir iterasi
         self.logger.info("[TOPO] multipath refresh: installed=%d skipped=%d unreachable=%d hosts=%d",
@@ -312,6 +325,10 @@ class DijkstraMultipathSwitch(DijkstraSwitch):
         # MODIFIKASI: Menambahkan baris kosong dan penanda akhir iterasi
         self.logger.info("[CYCLE-DONE] Iteration completed.")
         print("\n" + "="*60 + "\n")
+=======
+        self.logger.info("[TOPO] multipath refresh: installed=%d skipped=%d unreachable=%d hosts=%d",
+                         installed, skipped, unreachable, len(hosts))
+>>>>>>> 773ffb33fbbeb89fbee3b09a2893f8180f3d9dbb
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
