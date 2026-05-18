@@ -3,13 +3,13 @@
   "note": "Keys are 'min_dpid:max_dpid'. bandwidth_mbps used by widest_path and bellman_ford controllers.",
   "links": {
     "1:2": {
-      "bandwidth_mbps": 1000
+      "bandwidth_mbps": 20
+    },
+    "2:4": {
+      "bandwidth_mbps": 20
     },
     "1:3": {
       "bandwidth_mbps": 100
-    },
-    "2:4": {
-      "bandwidth_mbps": 1000
     },
     "3:4": {
       "bandwidth_mbps": 100

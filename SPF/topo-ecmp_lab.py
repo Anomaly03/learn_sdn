@@ -67,14 +67,54 @@ class ECMP_Topology(Topo):
         self.addLink(s4, h3, port1=1, port2=1)
         self.addLink(s4, h4, port1=2, port2=1)
 
+        # NORMAL
+        # Add links: switch to switch (diamond pattern, equal cost: 100 Mbps, 2ms, HFSC)
+        # info('*** Add Switch Links\n')
+        # # Create 2 equal-cost paths from s1 to s4 (both 3 hops)
+        # self.addLink(s1, s2, port1=3, port2=1, bw=100, delay='2ms', use_hfsc=True)  # Path 1 top
+        # self.addLink(s1, s3, port1=4, port2=1, bw=100, delay='2ms', use_hfsc=True)  # Path 2 bottom
+        # self.addLink(s2, s4, port1=2, port2=3, bw=100, delay='2ms', use_hfsc=True)  # Path 1 converge
+        # self.addLink(s3, s4, port1=2, port2=4, bw=100, delay='2ms', use_hfsc=True)  # Path 2 converge
+        
+        # SKENARIO-1 
+        # Add links: switch to switch (Eksperimen 1- Sparse & Distance Topology)
+        # info('*** Add Switch Links (Sparse & Distance Simulation)\n') 
+        # # JALUR UTAMA (Distance Jauh/Lambat): s1 -> s2 -> s4. beri delay 50ms agar menjadi jalur yang mahal
+        # self.addLink(s1, s2, port1=3, port2=1, bw=10, delay='50ms', use_hfsc=True)
+        # self.addLink(s2, s4, port1=2, port2=3, bw=10, delay='50ms', use_hfsc=True)
+
+        # # JALUR ALTERNATIF (Distance Dekat/Cepat): s1 -> s3 -> s4. beri delay sangat kecil (1ms) agar jalur ini dipilih
+        # self.addLink(s1, s3, port1=4, port2=1, bw=100, delay='1ms', use_hfsc=True)
+        # self.addLink(s3, s4, port1=2, port2=4, bw=100, delay='1ms', use_hfsc=True)
+
+        
+        # # SKENARIO-3
+        # info('*** Add Switch Links (Eksperimen 3 - Bottleneck Link)\n')
+       
+        # # JALUR KIRI (s2): 2 Hop secara fisik, Bandwidth dicekik 10 Mbps (BOTTLENECK)
+        # self.addLink(s1, s2, port1=3, port2=1, bw=10, delay='2ms', use_hfsc=True)
+        # self.addLink(s2, s4, port1=2, port2=3, bw=10, delay='2ms', use_hfsc=True)
+
+        # # JALUR KANAN (s3): 2 Hop secara fisik, Bandwidth longgar 100 Mbps (LONGGAR)
+        # self.addLink(s1, s3, port1=4, port2=1, bw=100, delay='2ms', use_hfsc=True)
+        # self.addLink(s3, s4, port1=2, port2=4, bw=100, delay='2ms', use_hfsc=True)
+        
+        # # SKENARIO 4
+        # # Add links: switch to switch (diamond pattern, equal cost: 100 Mbps, 2ms, HFSC)
+        # info('*** Add Switch Links\n')
+        # # Create 2 equal-cost paths from s1 to s4 (both 3 hops)
+        # self.addLink(s1, s2, port1=3, port2=1, bw=100, delay='100ms', use_hfsc=True)  # Path 1 top
+        # self.addLink(s1, s3, port1=4, port2=1, bw=100, delay='2ms', use_hfsc=True)  # Path 2 bottom
+        # self.addLink(s2, s4, port1=2, port2=3, bw=100, delay='100ms', use_hfsc=True)  # Path 1 converge
+        # self.addLink(s3, s4, port1=2, port2=4, bw=100, delay='2ms', use_hfsc=True)  # Path 2 converge
+        
+        # SKENARIO 5
         # Add links: switch to switch (diamond pattern, equal cost: 100 Mbps, 2ms, HFSC)
         info('*** Add Switch Links\n')
-        # Create 2 equal-cost paths from s1 to s4 (both 3 hops)
-        self.addLink(s1, s2, port1=3, port2=1, bw=100, delay='2ms', use_hfsc=True)  # Path 1 top
-        self.addLink(s1, s3, port1=4, port2=1, bw=100, delay='2ms', use_hfsc=True)  # Path 2 bottom
-        self.addLink(s2, s4, port1=2, port2=3, bw=100, delay='2ms', use_hfsc=True)  # Path 1 converge
-        self.addLink(s3, s4, port1=2, port2=4, bw=100, delay='2ms', use_hfsc=True)  # Path 2 converge
-
+        self.addLink(s1, s2, port1=3, port2=1, bw=100, delay='2ms', use_hfsc=True)  # Kiri
+        self.addLink(s1, s3, port1=4, port2=1, bw=100, delay='100ms', use_hfsc=True)    # Kanan
+        self.addLink(s2, s4, port1=2, port2=3, bw=100, delay='2ms', use_hfsc=True)  # Kiri
+        self.addLink(s3, s4, port1=2, port2=4, bw=100, delay='100ms', use_hfsc=True)    # Kanan
 
 def run():
     """Run the ECMP topology with Mininet."""
